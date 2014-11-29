@@ -1063,33 +1063,33 @@ impl Fe {
 }
 
 
-struct GeP2 {
+pub struct GeP2 {
     x: Fe,
     y: Fe,
     z: Fe,
 }
 
-struct GeP3 {
-    x: Fe,
-    y: Fe,
-    z: Fe,
-    t: Fe,
-}
-
-struct GeP1P1 {
+pub struct GeP3 {
     x: Fe,
     y: Fe,
     z: Fe,
     t: Fe,
 }
 
-struct GePrecomp {
+pub struct GeP1P1 {
+    x: Fe,
+    y: Fe,
+    z: Fe,
+    t: Fe,
+}
+
+pub struct GePrecomp {
     y_plus_x: Fe,
     y_minus_x: Fe,
     xy2d: Fe,
 }
 
-struct GeCached {
+pub struct GeCached {
     y_plus_x: Fe,
     y_minus_x: Fe,
     z: Fe,
@@ -1203,7 +1203,7 @@ impl GeP3 {
         self.to_p2().dbl()
     }
 
-    fn to_bytes(&self) -> [u8, ..32] {
+    pub fn to_bytes(&self) -> [u8, ..32] {
         let recip = self.z.invert();
         let x = self.x * recip;
         let y = self.y * recip;
@@ -2690,7 +2690,7 @@ B is the Ed25519 base point (x,4/5) with x positive.
 Preconditions:
   a[31] <= 127
 */
-fn ge_scalarmult_base(a: &[u8]) -> GeP3 {
+pub fn ge_scalarmult_base(a: &[u8]) -> GeP3 {
     let mut es: [i8, ..64] = [0, ..64];
     let mut r: GeP1P1;
     let mut s: GeP2;
@@ -2741,8 +2741,7 @@ Output:
     where l = 2^252 + 27742317777372353535851937790883648493.
     Overwrites s in place.
 */
-
-fn sc_reduce(s: &mut [u8]) {
+pub fn sc_reduce(s: &mut [u8]) {
     let mut s0: i64 = 2097151 & load_3i(s);
     let mut s1: i64 = 2097151 & (load_4i(s.slice(2, 6)) >> 5);
     let mut s2: i64 = 2097151 & (load_3i(s.slice(5, 8)) >> 2);
@@ -2994,7 +2993,7 @@ Output:
     s[0]+256*s[1]+...+256^31*s[31] = (ab+c) mod l
     where l = 2^252 + 27742317777372353535851937790883648493.
 */
-fn sc_muladd(s: &mut[u8], a: &[u8], b: &[u8], c: &[u8]) {
+pub fn sc_muladd(s: &mut[u8], a: &[u8], b: &[u8], c: &[u8]) {
     let a0 = 2097151 & load_3i(a.slice(0, 3));
     let a1 = 2097151 & (load_4i(a.slice(2, 6)) >> 5);
     let a2 = 2097151 & (load_3i(a.slice(5, 8)) >> 2);
@@ -3398,7 +3397,7 @@ pub fn curve25519_base(x: &[u8]) -> [u8, ..32] {
 }
 
 mod tests {
-    use curve25519_fe::{Fe, curve25519, curve25519_base};
+    use curve25519::{Fe, curve25519, curve25519_base};
 
     #[test]
     fn from_to_bytes_preserves() {
