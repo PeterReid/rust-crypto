@@ -944,7 +944,7 @@ impl Fe {
     }
 
     fn invert(&self) -> Fe {
-        let z1 = self;
+        let z1 = *self;
 
         /* qhasm: z2 = z1^2^1 */
         let z2 = z1.square();
@@ -1021,7 +1021,7 @@ impl Fe {
     fn is_nonzero(&self) -> bool {
         let bs = self.to_bytes();
         let zero = [0, ..32];
-        !fixed_time_eq(bs, zero)
+        !fixed_time_eq(bs.as_slice(), zero.as_slice())
     }
 
     fn is_negative(&self) -> bool {
@@ -1037,7 +1037,7 @@ impl Fe {
     fn pow25523(&self) -> Fe {
         let z2 = self.square();
         let z8 = range(0u, 2).fold(z2, |x, _| x.square());
-        let z9 = self * z8;
+        let z9 = *self * z8;
         let z11 = z2 * z9;
         let z22 = z11.square();
         let z_5_0 = z9 * z22;
@@ -3393,7 +3393,7 @@ pub fn curve25519(n: &[u8], p: &[u8]) -> [u8, ..32] {
 pub fn curve25519_base(x: &[u8]) -> [u8, ..32] {
     let mut base : [u8, ..32] = [0, ..32];
     base[0] = 9;
-    curve25519(x, base)
+    curve25519(x, base.as_slice())
 }
 
 mod tests {
