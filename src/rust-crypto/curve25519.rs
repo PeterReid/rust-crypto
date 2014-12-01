@@ -1069,6 +1069,7 @@ pub struct GeP2 {
     z: Fe,
 }
 
+#[deriving(Show)]
 pub struct GeP3 {
     x: Fe,
     y: Fe,
@@ -1207,7 +1208,7 @@ impl GeP3 {
         let recip = self.z.invert();
         let x = self.x * recip;
         let y = self.y * recip;
-        let mut bs = self.y.to_bytes();
+        let mut bs = y.to_bytes();
         bs[31] ^= (if x.is_negative() { 1 } else { 0 }) << 7;
         bs
     }
@@ -2698,7 +2699,7 @@ pub fn ge_scalarmult_base(a: &[u8]) -> GeP3 {
 
     for i in range(0, 32) {
         es[2 * i + 0] = ((a[i] >> 0) & 15) as i8;
-        es[2 * i + 0] = ((a[i] >> 4) & 15) as i8;
+        es[2 * i + 1] = ((a[i] >> 4) & 15) as i8;
     }
     /* each es[i] is between 0 and 15 */
     /* es[63] is between 0 and 7 */
@@ -2727,7 +2728,8 @@ pub fn ge_scalarmult_base(a: &[u8]) -> GeP3 {
 
     for i in range_step(0, 64, 2) {
         t = GePrecomp::select(i/2, es[i]);
-        r = h + t; h = r.to_p3();
+        r = h + t;
+        h = r.to_p3();
     }
 
     h
