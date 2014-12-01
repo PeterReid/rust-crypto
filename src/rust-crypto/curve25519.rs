@@ -3031,7 +3031,7 @@ pub fn sc_muladd(s: &mut[u8], a: &[u8], b: &[u8], c: &[u8]) {
     let c8 = 2097151 & load_3i(c.slice(21, 24));
     let c9 = 2097151 & (load_4i(c.slice(23, 27)) >> 5);
     let c10 = 2097151 & (load_3i(c.slice(26, 29)) >> 2);
-    let c11 = (load_4i(c.slice(28, 30)) >> 7);
+    let c11 = (load_4i(c.slice(28, 32)) >> 7);
     let mut s0: i64;
     let mut s1: i64;
     let mut s2: i64;
