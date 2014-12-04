@@ -1,6 +1,7 @@
 use digest::Digest;
 use sha2::{Sha512};
-use curve25519::{GeP3, ge_scalarmult_base, sc_reduce, sc_muladd};
+use curve25519::{GeP2, GeP3, ge_scalarmult_base, sc_reduce, sc_muladd};
+use util::{fixed_time_eq};
 use std::iter::range_step;
 
 pub fn keypair(seed: &[u8]) -> ([u8, ..64], [u8, ..32]) {
@@ -89,49 +90,40 @@ fn check_s_lt_l(s: &[u8]) -> bool
     return c == 0;
 }
 
-pub fn verify(message: &[u8], public_key: &[u8], signature: &[u8]) {
-/*        crypto_hash_sha512_state hs;
-    unsigned char h[64];
-    unsigned char rcheck[32];
-    unsigned int  i;
-    unsigned char d = 0;
-    ge_p3 A;
-    ge_p2 R;
+pub fn verify(message: &[u8], public_key: &[u8], signature: &[u8]) -> bool {
+    if check_s_lt_l(signature.slice(32, 64)) {
+        return false;
+    }
 
-    if check_S_lt_l(sig + 32) {
-        return false;
-    }
-    if (ge_frombytes_negate_vartime(&A, pk) != 0) {
-        return false;
-    }
+    let a = match GeP3::from_bytes_negate_vartime(public_key) {
+        Some(g) => g,
+        None => { return false; }
+    };
     let mut d = 0;
     for pk_byte in public_key.iter() {
         d |= *pk_byte;
     }
     if d == 0 {
-        return -1;
+        return false;
     }
 
     let mut hasher = Sha512::new();
     hasher.input(signature.slice(0, 32));
-    hasher.input(public_key)
+    hasher.input(public_key);
     hasher.input(message);
     let mut hash: [u8, ..64] = [0, ..64];
-    hasher.result(hash);
-    sc_reduce(hash);
+    hasher.result(hash.as_mut_slice());
+    sc_reduce(hash.as_mut_slice());
 
-    let R = ge_double_scalarmult_vartime(h, &A, sig.slice(32, 64));
+    let R = GeP2::double_scalarmult_vartime(hash.as_slice(), a, signature.slice(32, 64));
     let rcheck = R.to_bytes();
-    ge_tobytes(rcheck, &R);
 
-    return crypto_verify_32(rcheck, sig) | (-(rcheck - sig == 0)) |
-           sodium_memcmp(sig, rcheck, 32);
-*/
+    return fixed_time_eq(rcheck.as_slice(), signature.slice(0, 32));
 }
 
 #[cfg(test)]
 mod tests {
-    use ed25519::{keypair, signature};
+    use ed25519::{keypair, signature, verify};
 
     fn do_keypair_case(seed: [u8, ..32], expected_secret: [u8, ..64], expected_public: [u8, ..32]) {
         let (actual_secret, actual_public) = keypair(seed.as_slice());
@@ -163,8 +155,19 @@ mod tests {
 
     fn do_sign_verify_case(seed: [u8, ..32], message: &[u8], expected_signature: [u8, ..64]) {
         let (secret_key, public_key) = keypair(seed.as_slice());
-        let actual_signature = signature(message, secret_key.as_slice()); 
+        let mut actual_signature = signature(message, secret_key.as_slice()); 
         assert_eq!(expected_signature.to_vec(), actual_signature.to_vec());
+        assert!(verify(message, public_key.as_slice(), actual_signature.as_slice()));
+
+        for &(index, flip) in [(0, 1), (31, 0x80), (20, 0xff)].iter() {
+            actual_signature[index] ^= flip;
+            assert!(!verify(message, public_key.as_slice(), actual_signature.as_slice()))
+            actual_signature[index] ^= flip;
+        }
+
+        let mut public_key_corrupt = public_key;
+        public_key_corrupt[0] ^= 1;
+        assert!(!verify(message, public_key_corrupt.as_slice(), actual_signature.as_slice()))
     }
 
     #[test]
