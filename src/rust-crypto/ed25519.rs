@@ -24,7 +24,7 @@ pub fn keypair(seed: &[u8]) -> ([u8, ..64], [u8, ..32]) {
     for (dest, src) in secret.slice_mut(0,32).iter_mut().zip(seed.iter()) {
         *dest = *src;
     }
-    (secret, public_key) 
+    (secret, public_key)
 }
 
 pub fn signature(message: &[u8], secret_key: &[u8]) -> [u8, ..64] {
@@ -50,7 +50,7 @@ pub fn signature(message: &[u8], secret_key: &[u8]) -> [u8, ..64] {
         sc_reduce(hash_output.slice_mut(0, 64));
         hash_output
     };
-   
+
     let mut signature: [u8, ..64] = [0, ..64];
     let r: GeP3 = ge_scalarmult_base(nonce.slice(0, 32));
     for (result_byte, source_byte) in signature.slice_mut(0, 32).iter_mut().zip(r.to_bytes().iter()) {
@@ -74,7 +74,7 @@ pub fn signature(message: &[u8], secret_key: &[u8]) -> [u8, ..64] {
 }
 fn check_s_lt_l(s: &[u8]) -> bool
 {
-    let l: [u8, ..32] = 
+    let l: [u8, ..32] =
       [ 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x14, 0xde, 0xf9, 0xde, 0xa2, 0xf7, 0x9c, 0xd6,
@@ -131,7 +131,7 @@ mod tests {
         assert_eq!(actual_public.to_vec(), expected_public.to_vec());
     }
 
-    #[test] 
+    #[test]
     fn keypair_cases() {
         do_keypair_case(
             [0x26, 0x27, 0xf6, 0x85, 0x97, 0x15, 0xad, 0x1d, 0xd2, 0x94, 0xdd, 0xc4, 0x76, 0x19, 0x39, 0x31,
@@ -155,7 +155,7 @@ mod tests {
 
     fn do_sign_verify_case(seed: [u8, ..32], message: &[u8], expected_signature: [u8, ..64]) {
         let (secret_key, public_key) = keypair(seed.as_slice());
-        let mut actual_signature = signature(message, secret_key.as_slice()); 
+        let mut actual_signature = signature(message, secret_key.as_slice());
         assert_eq!(expected_signature.to_vec(), actual_signature.to_vec());
         assert!(verify(message, public_key.as_slice(), actual_signature.as_slice()));
 
