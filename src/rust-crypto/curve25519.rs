@@ -1118,7 +1118,7 @@ impl GeP1P1 {
 
 }
 
-static Bi: [GePrecomp, ..8] = [
+static BI: [GePrecomp, ..8] = [
     GePrecomp {
         y_plus_x: Fe([ 25967493,-14356035,29566456,3660896,-12694345,4014787,27544626,-11754271,-6079156,2047605 ]), 
         y_minus_x: Fe([ -12545711,934262,-2722910,3049990,-727428,9406986,12720692,5043384,19500929,-15469378 ]),
@@ -1203,7 +1203,7 @@ impl GeP2 {
                     if r[i + b] != 0 {
                         if r[i] + (r[i + b] << b) <= 15 {
                             r[i] += r[i + b] << b; r[i + b] = 0;
-                        } else if (r[i] - (r[i + b] << b) >= -15) {
+                        } else if r[i] - (r[i + b] << b) >= -15 {
                             r[i] -= r[i + b] << b;
                             for k in range(i+b, 256) {
                                 if r[k]==0 {
@@ -1229,20 +1229,20 @@ impl GeP2 {
     and b = b[0]+256*b[1]+...+256^31 b[31].
     B is the Ed25519 base point (x,4/5) with x positive.
     */
-    pub fn double_scalarmult_vartime(a: &[u8], A: GeP3, b: &[u8]) -> GeP2 {
-        let aslide = GeP2::slide(a);
-        let bslide = GeP2::slide(b);
+    pub fn double_scalarmult_vartime(a_scalar: &[u8], a_point: GeP3, b_scalar: &[u8]) -> GeP2 {
+        let aslide = GeP2::slide(a_scalar);
+        let bslide = GeP2::slide(b_scalar);
 
-        let mut Ai = [GeCached{y_plus_x:FE_ZERO, y_minus_x: FE_ZERO, z: FE_ZERO, t2d: FE_ZERO}, ..8]; /* A,3A,5A,7A,9A,11A,13A,15A */
-        Ai[0] = A.to_cached();
-        let A2 = A.dbl().to_p3();
-        Ai[1] = (A2 + Ai[0]).to_p3().to_cached();
-        Ai[2] = (A2 + Ai[1]).to_p3().to_cached();
-        Ai[3] = (A2 + Ai[2]).to_p3().to_cached();
-        Ai[4] = (A2 + Ai[3]).to_p3().to_cached();
-        Ai[5] = (A2 + Ai[4]).to_p3().to_cached();
-        Ai[6] = (A2 + Ai[5]).to_p3().to_cached();
-        Ai[7] = (A2 + Ai[6]).to_p3().to_cached();
+        let mut ai = [GeCached{y_plus_x:FE_ZERO, y_minus_x: FE_ZERO, z: FE_ZERO, t2d: FE_ZERO}, ..8]; /* A,3A,5A,7A,9A,11A,13A,15A */
+        ai[0] = a_point.to_cached();
+        let a2 = a_point.dbl().to_p3();
+        ai[1] = (a2 + ai[0]).to_p3().to_cached();
+        ai[2] = (a2 + ai[1]).to_p3().to_cached();
+        ai[3] = (a2 + ai[2]).to_p3().to_cached();
+        ai[4] = (a2 + ai[3]).to_p3().to_cached();
+        ai[5] = (a2 + ai[4]).to_p3().to_cached();
+        ai[6] = (a2 + ai[5]).to_p3().to_cached();
+        ai[7] = (a2 + ai[6]).to_p3().to_cached();
 
         let mut r = GeP2::zero();
 
@@ -1260,15 +1260,15 @@ impl GeP2 {
         loop {
             let mut t = r.dbl();
             if aslide[i] > 0 {
-                t = t.to_p3() + Ai[(aslide[i]/2) as uint];
+                t = t.to_p3() + ai[(aslide[i]/2) as uint];
             } else if aslide[i] < 0 {
-                t = t.to_p3() - Ai[(-aslide[i]/2) as uint];
+                t = t.to_p3() - ai[(-aslide[i]/2) as uint];
             }
 
             if bslide[i] > 0 {
-                t = t.to_p3() + Bi[(bslide[i]/2) as uint];
+                t = t.to_p3() + BI[(bslide[i]/2) as uint];
             } else if bslide[i] < 0 {
-                t = t.to_p3() - Bi[(-bslide[i]/2) as uint];
+                t = t.to_p3() - BI[(-bslide[i]/2) as uint];
             }
             
             r = t.to_p2();
@@ -2904,12 +2904,12 @@ pub fn sc_reduce(s: &mut [u8]) {
     let mut s15: i64 = 2097151 & (load_3i(s.slice(39, 42)) >> 3);
     let mut s16: i64 = 2097151 & load_3i(s.slice(42, 45));
     let mut s17: i64 = 2097151 & (load_4i(s.slice(44, 48)) >> 5);
-    let mut s18: i64 = 2097151 & (load_3i(s.slice(47, 50)) >> 2);
-    let mut s19: i64 = 2097151 & (load_4i(s.slice(49, 53)) >> 7);
-    let mut s20: i64 = 2097151 & (load_4i(s.slice(52, 56)) >> 4);
-    let mut s21: i64 = 2097151 & (load_3i(s.slice(55, 58)) >> 1);
-    let mut s22: i64 = 2097151 & (load_4i(s.slice(57, 61)) >> 6);
-    let mut s23: i64 = (load_4i(s.slice(60, 64)) >> 3);
+    let s18: i64 = 2097151 & (load_3i(s.slice(47, 50)) >> 2);
+    let s19: i64 = 2097151 & (load_4i(s.slice(49, 53)) >> 7);
+    let s20: i64 = 2097151 & (load_4i(s.slice(52, 56)) >> 4);
+    let s21: i64 = 2097151 & (load_3i(s.slice(55, 58)) >> 1);
+    let s22: i64 = 2097151 & (load_4i(s.slice(57, 61)) >> 6);
+    let s23: i64 = load_4i(s.slice(60, 64)) >> 3;
     let mut carry0: i64;
     let mut carry1: i64;
     let mut carry2: i64;
@@ -3149,7 +3149,7 @@ pub fn sc_muladd(s: &mut[u8], a: &[u8], b: &[u8], c: &[u8]) {
     let a8 = 2097151 & load_3i(a.slice(21, 24));
     let a9 = 2097151 & (load_4i(a.slice(23, 27)) >> 5);
     let a10 = 2097151 & (load_3i(a.slice(26, 29)) >> 2);
-    let a11 = (load_4i(a.slice(28, 32)) >> 7);
+    let a11 = load_4i(a.slice(28, 32)) >> 7;
     let b0 = 2097151 & load_3i(b.slice(0, 3));
     let b1 = 2097151 & (load_4i(b.slice(2, 6)) >> 5);
     let b2 = 2097151 & (load_3i(b.slice(5, 8)) >> 2);
@@ -3161,7 +3161,7 @@ pub fn sc_muladd(s: &mut[u8], a: &[u8], b: &[u8], c: &[u8]) {
     let b8 = 2097151 & load_3i(b.slice(21, 24));
     let b9 = 2097151 & (load_4i(b.slice(23, 27)) >> 5);
     let b10 = 2097151 & (load_3i(b.slice(26, 29)) >> 2);
-    let b11 = (load_4i(b.slice(28, 32)) >> 7);
+    let b11 = load_4i(b.slice(28, 32)) >> 7;
     let c0 = 2097151 & load_3i(c.slice(0, 3));
     let c1 = 2097151 & (load_4i(c.slice(2, 6)) >> 5);
     let c2 = 2097151 & (load_3i(c.slice(5, 8)) >> 2);
@@ -3173,7 +3173,7 @@ pub fn sc_muladd(s: &mut[u8], a: &[u8], b: &[u8], c: &[u8]) {
     let c8 = 2097151 & load_3i(c.slice(21, 24));
     let c9 = 2097151 & (load_4i(c.slice(23, 27)) >> 5);
     let c10 = 2097151 & (load_3i(c.slice(26, 29)) >> 2);
-    let c11 = (load_4i(c.slice(28, 32)) >> 7);
+    let c11 = load_4i(c.slice(28, 32)) >> 7;
     let mut s0: i64;
     let mut s1: i64;
     let mut s2: i64;
@@ -3540,8 +3540,9 @@ pub fn curve25519_base(x: &[u8]) -> [u8, ..32] {
     curve25519(x, base.as_slice())
 }
 
+#[cfg(test)]
 mod tests {
-    use curve25519::{Fe, curve25519, curve25519_base};
+    use curve25519::{Fe, curve25519_base};
 
     #[test]
     fn from_to_bytes_preserves() {

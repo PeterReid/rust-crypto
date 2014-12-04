@@ -115,8 +115,8 @@ pub fn verify(message: &[u8], public_key: &[u8], signature: &[u8]) -> bool {
     hasher.result(hash.as_mut_slice());
     sc_reduce(hash.as_mut_slice());
 
-    let R = GeP2::double_scalarmult_vartime(hash.as_slice(), a, signature.slice(32, 64));
-    let rcheck = R.to_bytes();
+    let r = GeP2::double_scalarmult_vartime(hash.as_slice(), a, signature.slice(32, 64));
+    let rcheck = r.to_bytes();
 
     return fixed_time_eq(rcheck.as_slice(), signature.slice(0, 32));
 }
